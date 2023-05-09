@@ -62,4 +62,27 @@ int main() {
 
     return 0;
 }
+void *customer(void *arg) {
+    customer_info *data = (customer_info *)arg;
+    int customer_id = data->id;
+    int num_chairs = data->num_chairs;
 
+    sem_wait(&mutex);
+    if (waiting_customers < num_chairs) {
+        waiting_customers++;
+        printf("Customer %d is waiting. (Total waiting customers: %d)\n", customer_id, waiting_customers);
+        sem_post(&customer_sem);
+        sem_post(&mutex);
+
+        sem_wait(&barber_sem);
+        sem_wait(&mutex);
+        waiting_customers--;
+        printf("Customer %d is getting a haircut. (Total waiting customers: %d)\n", customer_id, waiting_customers);
+        sem_post(&mutex);
+    } else {
+        printf("No chairs available. Customer %d leaves.\n", customer_id);
+        sem_post(&mutex);
+    }
+
+    return NULL;
+}
