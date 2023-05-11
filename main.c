@@ -86,3 +86,13 @@ void *customer(void *arg) {
 
     return NULL;
 }
+void *barber(void *arg){
+    while(1){
+     sem_wait(&customer_sem);
+     sem_post(&barber_sem);
+     printf("Barber is cutting hair");
+     sleep(3);
+     printf("Barber has finished cutting hair");
+    }
+    return null;
+}
