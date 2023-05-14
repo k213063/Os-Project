@@ -106,15 +106,20 @@ void *customer(void *arg) {
 }
 
 void *barber(void *arg) {
+	// receiving a pointer to barber info as an argument which contains the data of the barber func
     barber_info *data = (barber_info *)arg;
+	// extracts the babrber id and store it into the local variable 
     int barber_id = data->id;
-
     while (1) {
-        sem_wait(&customer_sem);
-        sem_post(&barber_sem);
+	    //customer  semaphore is initialized with 0
+        sem_wait(&customer_sem); //the barber thread is blocked until a customer is avail
+	    //when the custiomer is avaialbe semaphore is decremented and the barber thread will continue its execution
+        sem_post(&barber_sem); // this will signal that the barber is now avaialble to serve the customer 
         printf("Barber %d is cutting hair.\n", barber_id);
-        sleep(3);
+        sleep(3); //hair cutting process 
         printf("Barber %d has finished cutting hair.\n", barber_id);
+	    // and the function will go back to the loop statrrting and wait for the next custiomer 
+	    
     }
 
     return NULL;
