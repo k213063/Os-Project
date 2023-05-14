@@ -1,82 +1,83 @@
-
+// Include necessary header files
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <stdbool.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include <stdbool.h>
 
-sem_t customer_sem;
-sem_t barber_sem;
-sem_t mutex;
+// Define global semaphores
+sem_t customer_sem;     // Declare semaphore for customers
+sem_t barber_sem;       // Declare semaphore for barbers
+sem_t mutex;            // Declare mutex for synchronizing access to the shared queue
 
-typedef struct {
-    int id;
-    int num_chairs;
+typedef struct {        // Define a struct for storing customer information
+    int id;             // Customer ID
+    int num_chairs;     // Number of chairs in the waiting room
 } customer_info;
 
-typedef struct {
-    int id;
+typedef struct {        // Define a struct for storing barber information
+    int id;             // Barber ID
 } barber_info;
 
-int queue[100]; 
-int front = -1;
-int rear = -1;
+int queue[100];         // Declare an array for the queue of customers
+int front = -1;         // Initialize front of queue as -1
+int rear = -1;          // Initialize rear of queue as -1
 
-void enqueue(int id);
-int dequeue();
-bool is_queue_empty();
-bool is_queue_full(int num_chairs);
+void enqueue(int id);   // Declare function for adding a customer to the queue
+int dequeue();          // Declare function for removing a customer from the queue
+bool is_queue_empty();  // Declare function for checking if the queue is empty
+bool is_queue_full(int num_chairs);  // Declare function for checking if the queue is full
 
-void *customer(void *arg);
-void *barber(void *arg);
+void *customer(void *arg);  // Declare function for simulating a customer
+void *barber(void *arg);    // Declare function for simulating a barber
 
-int main() {
+int main() {                    // Main function
+
+    int num_chairs, num_customers, num_barbers;  // Declare variables for user input
+
+    printf("Enter the number of chairs: ");       // Prompt user for number of chairs
+    scanf("%d", &num_chairs);                     // Get user input
+
+    printf("Enter the number of customers: ");    // Prompt user for number of customers
+    scanf("%d", &num_customers);                  // Get user input
+
+    printf("Enter the number of barbers: ");      // Prompt user for number of barbers
+    scanf("%d", &num_barbers);                    // Get user input
+
+    pthread_t customer_threads[num_customers];    // Declare array of customer threads
+    pthread_t barber_threads[num_barbers];        // Declare array of barber threads
+    customer_info customer_data[num_customers];   // Declare array of customer information structs
+    barber_info barber_data[num_barbers];         // Declare array of barber information structs
+
+    sem_init(&customer_sem, 0, 0);                // Initialize customer semaphore to 0
+    sem_init(&barber_sem, 0, 0);                  // Initialize barber semaphore to 0
+    sem_init(&mutex, 0, 1);                       // Initialize mutex to 1
+
+
+   for (int i = 0; i < num_barbers; i++) { // Create threads for the barbers
+    barber_data[i].id = i;
+    pthread_create(&barber_threads[i], NULL, barber, (void *)&barber_data[i]); // Create a new barber thread and pass the barber data as an argument
+}
+
+for (int i = 0; i < num_customers; i++) { // Create threads for the customers
+    customer_data[i].id = i;
+    customer_data[i].num_chairs = num_chairs;
+    pthread_create(&customer_threads[i], NULL, customer, (void *)&customer_data[i]); // Create a new customer thread and pass the customer data as an argument
+    sleep(1); // Sleep for 1 second to simulate customers arriving at different times
+}
+
+for (int i = 0; i < num_customers; i++) { // Wait for all the customer threads to finish
+    pthread_join(customer_threads[i], NULL);
+}
+
+for (int i = 0; i < num_barbers; i++) { // Cancel all the barber threads
+    pthread_cancel(barber_threads[i]);
+}
+
+sem_destroy(&customer_sem); // Destroy the customer semaphore
+sem_destroy(&barber_sem); // Destroy the barber semaphore
+sem_destroy(&mutex); // Destroy the mutex semaphore
 	
-    int num_chairs, num_customers, num_barbers;
-
-    printf("Enter the number of chairs: ");
-    scanf("%d", &num_chairs);
-
-    printf("Enter the number of customers: ");
-    scanf("%d", &num_customers);
-
-    printf("Enter the number of barbers: ");
-    scanf("%d", &num_barbers);
-
-    pthread_t customer_threads[num_customers];
-    pthread_t barber_threads[num_barbers];
-    customer_info customer_data[num_customers];
-    barber_info barber_data[num_barbers];
-
-    sem_init(&customer_sem, 0, 0);
-    sem_init(&barber_sem, 0, 0);
-    sem_init(&mutex, 0, 1);
-
-    for (int i = 0; i < num_barbers; i++) {
-        barber_data[i].id = i;
-        pthread_create(&barber_threads[i], NULL, barber, (void *)&barber_data[i]);
-    }
-
-    for (int i = 0; i < num_customers; i++) {
-        customer_data[i].id = i;
-        customer_data[i].num_chairs = num_chairs;
-        pthread_create(&customer_threads[i], NULL, customer, (void *)&customer_data[i]);
-        sleep(1);
-    }
-
-    for (int i = 0; i < num_customers; i++) {
-        pthread_join(customer_threads[i], NULL);
-    }
-
-    for (int i = 0; i < num_barbers; i++) {
-        pthread_cancel(barber_threads[i]);
-    }
-
-    sem_destroy(&customer_sem);
-    sem_destroy(&barber_sem);
-    sem_destroy(&mutex);
-
+	
     return 0;
 }
 
