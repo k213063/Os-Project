@@ -1,25 +1,34 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<unistd.h>
-#include<pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <stdbool.h>
 
 sem_t customer_sem;
 sem_t barber_sem;
 sem_t mutex;
-
-int waiting_customers = 0;
-
-void *customer(void *arg);
-void *barber(void *arg);
 
 typedef struct {
     int id;
     int num_chairs;
 } customer_info;
 
+int queue[100]; 
+int front = -1;
+int rear = -1;
+
+void enqueue(int id);
+int dequeue();
+bool is_queue_empty();
+bool is_queue_full();
+
+void *customer(void *arg);
+void *barber(void *arg);
+
 int main() {
     int num_chairs, num_customers, num_barbers;
-    
+
     printf("Enter the number of chairs: ");
     scanf("%d", &num_chairs);
 
@@ -62,22 +71,23 @@ int main() {
 
     return 0;
 }
+
 void *customer(void *arg) {
     customer_info *data = (customer_info *)arg;
     int customer_id = data->id;
     int num_chairs = data->num_chairs;
 
     sem_wait(&mutex);
-    if (waiting_customers < num_chairs) {
-        waiting_customers++;
-        printf("Customer %d is waiting. (Total waiting customers: %d)\n", customer_id, waiting_customers);
+    if (!is_queue_full(num_chairs)) {
+        enqueue(customer_id);
+        printf("Customer %d is waiting. (Total waiting customers: %d)\n", customer_id, rear - front);
         sem_post(&customer_sem);
         sem_post(&mutex);
 
         sem_wait(&barber_sem);
         sem_wait(&mutex);
-        waiting_customers--;
-        printf("Customer %d is getting a haircut. (Total waiting customers: %d)\n", customer_id, waiting_customers);
+        dequeue();
+        printf("Customer %d is getting a haircut. (Total waiting customers: %d)\n", customer_id, rear - front);
         sem_post(&mutex);
     } else {
         printf("No chairs available. Customer %d leaves.\n", customer_id);
@@ -86,13 +96,47 @@ void *customer(void *arg) {
 
     return NULL;
 }
-void *barber(void *arg){
-    while(1){
-     sem_wait(&customer_sem);
-     sem_post(&barber_sem);
-     printf("Barber is cutting hair");
-     sleep(3);
-     printf("Barber has finished cutting hair");
+
+void *barber(void *arg) {
+    while (1) {
+        sem_wait(&customer_sem);
+        sem_post(&barber_sem);
+        printf("Barber is cutting hair.\n");
+        sleep(3);
+        printf("Barber has finished cutting hair.\n");
     }
-    return null;
+
+    return NULL;
+}
+
+void enqueue(int id) {
+    if (rear == -1) {
+        front = rear = 0;
+        queue[rear] = id;
+    } else {
+        rear++;
+        queue[rear] = id;
+    }
+}
+int dequeue() {
+    if (is_queue_empty()) {
+        return -1;
+    }
+
+    int data = queue[front];
+    front++;
+
+    if (front > rear) {
+        front = rear = -1;
+    }
+
+    return data;
+}
+
+bool is_queue_empty() {
+    return front == -1;
+}
+
+bool is_queue_full(int num_chairs) {
+    return rear == num_chairs - 1;
 }
