@@ -14,6 +14,10 @@ typedef struct {
     int num_chairs;
 } customer_info;
 
+typedef struct {
+    int id;
+} barber_info;
+
 int queue[100]; 
 int front = -1;
 int rear = -1;
@@ -21,12 +25,13 @@ int rear = -1;
 void enqueue(int id);
 int dequeue();
 bool is_queue_empty();
-bool is_queue_full();
+bool is_queue_full(int num_chairs);
 
 void *customer(void *arg);
 void *barber(void *arg);
 
 int main() {
+	
     int num_chairs, num_customers, num_barbers;
 
     printf("Enter the number of chairs: ");
@@ -41,13 +46,15 @@ int main() {
     pthread_t customer_threads[num_customers];
     pthread_t barber_threads[num_barbers];
     customer_info customer_data[num_customers];
+    barber_info barber_data[num_barbers];
 
     sem_init(&customer_sem, 0, 0);
     sem_init(&barber_sem, 0, 0);
     sem_init(&mutex, 0, 1);
 
     for (int i = 0; i < num_barbers; i++) {
-        pthread_create(&barber_threads[i], NULL, barber, NULL);
+        barber_data[i].id = i;
+        pthread_create(&barber_threads[i], NULL, barber, (void *)&barber_data[i]);
     }
 
     for (int i = 0; i < num_customers; i++) {
@@ -98,12 +105,15 @@ void *customer(void *arg) {
 }
 
 void *barber(void *arg) {
+    barber_info *data = (barber_info *)arg;
+    int barber_id = data->id;
+
     while (1) {
         sem_wait(&customer_sem);
         sem_post(&barber_sem);
-        printf("Barber is cutting hair.\n");
+        printf("Barber %d is cutting hair.\n", barber_id);
         sleep(3);
-        printf("Barber has finished cutting hair.\n");
+        printf("Barber %d has finished cutting hair.\n", barber_id);
     }
 
     return NULL;
@@ -118,6 +128,7 @@ void enqueue(int id) {
         queue[rear] = id;
     }
 }
+
 int dequeue() {
     if (is_queue_empty()) {
         return -1;
