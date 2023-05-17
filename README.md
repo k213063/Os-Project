@@ -1,4 +1,4 @@
-# SLEEPING BARBER PROBLEM
+## SLEEPING BARBER PROBLEM 
 
 <h4> DONE BY: </h4>
 <h4> 21K-3107	RAHIMA IRFAN </h4>
@@ -289,22 +289,18 @@ bool is_queue_full(int num_chairs) {
 
 <h1> DIFFERENCE OF CODE AND WHY?</h1>
 
-This code implements a classic computer science problem, known as the Sleeping Barber Problem, using several important concepts in operating systems and concurrent computing. Here are the key components:
+<h3> ADDITION OF QUEUE: </h3>
+Now we have added a queue with two variables front and rear because this allows us to keep track of customers waiting in FCFS served manner. The queue represents the waiting area with a limited number of chairs specified by num_chairs variable.
 
-<h6> Threads: </h6> Threads are used to represent barbers and customers. In this case, each barber and customer is running as a separate thread. This allows for concurrent execution, a critical aspect of the problem.
+<h3> MODIFICATION IN CUSTOMER_INFO STRUCT: </h3>
+Modified the customer_info struct to include this new field  num_chairs mentioned above. It is used to check if the waiting area is full before enqueuing a new customer.
 
-<h6> Semaphores:</h6> Semaphores are used to control access to the shared resources (the barber chairs and the barber's time) and to synchronize the actions of the barbers and customers. There are three semaphores used in this code:
+<h3> MODIFICATION IN CUSTOMER(): </h3>
+Modified the customer function to enqueue customers to display the number of waiting customers. Before enqueueing a customer, the function checks if the waiting area is full. If there is space, the customer is added, and the total number of waiting customers is displayed. This information helps to understand the current state of the waiting area.
 
-<h6> customer_sem:</h6> This semaphore is used to signal the barber when a customer is available. It's incremented each time a customer arrives and takes a seat, and it's decremented each time a barber starts to cut a customer's hair.
+<h3> MODIFICATION IN BARBER():</h3>
+Modified the barber function to display the barber's ID while cutting hair. Each barber is assigned a unique ID, which is now displayed when a barber is cutting hair. This allows identifying which barber is performing the task.  
 
-<h6> barber_sem:</h6> This semaphore is used to signal the customer when the barber has finished cutting their hair. It's incremented each time a barber finishes a haircut, and it's decremented each time a customer's hair has been cut.
+<h3> MODIFICATION IN MAIN():</h3>
+The user is now prompted to enter the number of chairs available in the waiting area. This input determines the maximum capacity of the queue and helps manage the waiting customers accordingly.
 
-<h6> mutex:</h6> This semaphore is used as a mutual exclusion lock to protect the shared data structure (the waiting room queue) from simultaneous access by multiple threads. Without this lock, it's possible that two customers could try to take the same seat at the same time, or a customer could try to take a seat at the same time that a barber is trying to find a customer, leading to race conditions and data inconsistency.
-
-<h6> Queue:</h6> The queue is a data structure that represents the waiting room chairs. Customers "arrive" by being added to the queue, and barbers "find a customer" by removing them from the queue. The queue operations must be protected by the mutex semaphore to avoid simultaneous access by multiple threads.
-
-<h6> Busy Waiting: </h6> The barber threads are in a loop where they continually check the customer_sem semaphore to see if a customer is available. This is a form of busy waiting, which can be CPU-intensive but is acceptable here because the barbers have nothing else to do when they're not cutting hair.
-
-<h6> Sleep and Wakeup Mechanisms: </h6> The sleep() function is used to simulate the time it takes for a barber to cut a customer's hair. The semaphore wait() and post() operations are used to put threads to sleep (when they're waiting for a resource) and wake them up (when the resource becomes available).
-
-In summary, this code demonstrates how to use threads, semaphores, and queues to implement a multi-threaded simulation with shared resources, mutual exclusion, synchronization, and busy waiting.
